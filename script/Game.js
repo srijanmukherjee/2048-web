@@ -101,7 +101,6 @@ export class Game {
     swipeTo(x, y, threshold = 50) {
         const dx = x - this.touch.x;
         const dy = y - this.touch.y;
-        console.log({x, y, threshold, dx, dy})
 
         if (Math.abs(dx) > Math.abs(dy)) {
             if (Math.abs(dx) < threshold) return;
