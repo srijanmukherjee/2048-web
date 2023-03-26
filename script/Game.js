@@ -42,6 +42,8 @@ export class Game {
             y: null
         }
 
+        this.lastTouch = { x: null, y: null }
+
         initialize(this);
     }
 
@@ -57,6 +59,10 @@ export class Game {
             const [ touch ] = event.touches;
             this.touch.x = touch.clientX;
             this.touch.y = touch.clientY;
+            this.lastTouch = {
+                x: this.touch.x,
+                y: this.touch.y
+            };
         });
 
         this.container.addEventListener("mousedown", ({clientX, clientY}) => {
@@ -70,26 +76,39 @@ export class Game {
             this.swipeTo(x, y);
         })
 
-        document.addEventListener("touchend", (event) => {
+        document.addEventListener("touchmove", (event) => {
             const [ touch ] = event.touches;
             const { clientX: x, clientY: y } = touch;
 
-            if (!this.touch.x || !this.touch.y) return;
+            this.lastTouch.x = x;
+            this.lastTouch.y = y;
+        })
 
-            this.swipeTo(x, y);
+        document.addEventListener("touchend", (event) => {
+            if (this.lastTouch.x === null || this.lastTouch.y === null) return;
+
+            this.swipeTo(this.lastTouch.x, this.lastTouch.y);
+
+            this.lastTouch.x = null;
+            this.lastTouch.y = null;
+            this.touch = {
+                x: null,
+                y: null
+            };
         });
     }
 
-    swipeTo(x, y) {
+    swipeTo(x, y, threshold = 50) {
         const dx = x - this.touch.x;
         const dy = y - this.touch.y;
+        console.log({x, y, threshold, dx, dy})
 
         if (Math.abs(dx) > Math.abs(dy)) {
-            if (Math.abs(dx) < 50) return;
+            if (Math.abs(dx) < threshold) return;
             if (dx > 0) this.moveRight();
             else        this.moveLeft();
         } else {
-            if (Math.abs(dy) < 50) return;
+            if (Math.abs(dy) < threshold) return;
             if (dy > 0) this.moveDown();
             else        this.moveUp();
         }
