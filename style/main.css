@@ -14,7 +14,7 @@ body {
 
 .game-stage {
     aspect-ratio: 1/1;
-    width: 90vw;
+    width: min(90vw, 90vh);
     position: relative;
     background-color: #444;
     border-radius: var(--border-radius);
@@ -34,4 +34,5 @@ body {
     aspect-ratio: 1/1;
     border: 5px solid #444;
     border-radius: var(--border-radius);
+    user-select: none;
 }

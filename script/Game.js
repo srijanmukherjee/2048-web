@@ -37,6 +37,11 @@ export class Game {
         this.cells      = new Array(gridSize * gridSize).fill(null);
         this.maxScore   = 2;
 
+        this.touch = {
+            x: null,
+            y: null
+        }
+
         initialize(this);
     }
 
@@ -47,6 +52,47 @@ export class Game {
         document.addEventListener("keyup", (event) => {
             this.onKeyUp(event);
         });
+
+        document.addEventListener("touchstart", (event) => {
+            const [ touch ] = event.touches;
+            this.touch.x = touch.clientX;
+            this.touch.y = touch.clientY;
+        });
+
+        this.container.addEventListener("mousedown", ({clientX, clientY}) => {
+            this.touch.x = clientX;
+            this.touch.y = clientY;
+        });
+
+        this.container.addEventListener("mouseup", ({clientX: x, clientY: y}) => {
+            if (!this.touch.x || !this.touch.y) return;
+
+            this.swipeTo(x, y);
+        })
+
+        document.addEventListener("touchend", (event) => {
+            const [ touch ] = event.touches;
+            const { clientX: x, clientY: y } = touch;
+
+            if (!this.touch.x || !this.touch.y) return;
+
+            this.swipeTo(x, y);
+        });
+    }
+
+    swipeTo(x, y) {
+        const dx = x - this.touch.x;
+        const dy = y - this.touch.y;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            if (Math.abs(dx) < 50) return;
+            if (dx > 0) this.moveRight();
+            else        this.moveLeft();
+        } else {
+            if (Math.abs(dy) < 50) return;
+            if (dy > 0) this.moveDown();
+            else        this.moveUp();
+        }
     }
 
     onKeyUp({ key }) {
