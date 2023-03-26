@@ -96,6 +96,8 @@ export class Game {
                 y: null
             };
         });
+
+        this.insertRandom(2048)
     }
 
     swipeTo(x, y, threshold = 50) {
