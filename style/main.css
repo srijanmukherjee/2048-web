@@ -1,0 +1,37 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    background-color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+.game-stage {
+    aspect-ratio: 1/1;
+    width: 90vw;
+    position: relative;
+    background-color: #444;
+    border-radius: var(--border-radius);
+
+    --border-radius: 12px;
+}
+
+.game-stage > .game-cell {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    font-size: 4.8rem;
+    color: #fff;
+    font-weight: 500;
+    width: calc(100% / 4);
+    transition: 100ms;
+    aspect-ratio: 1/1;
+    border: 5px solid #444;
+    border-radius: var(--border-radius);
+}
