@@ -1,5 +1,6 @@
 const CLASS_PREFIX = "game";
 const DEFAULT_GRID_SIZE = 4;
+const SWIPE_SOUND_SRC = '/assets/sfx/swipe.mp3';
 
 const GameState = Object.freeze({
     HOME: 'home',
@@ -31,11 +32,30 @@ export class Game {
         if (gridSize < 2)
             throw new Error("Grid size cannot be less than 2");
         
-        this.container  = container;
+        /**
+         * @type {HTMLDivElement}
+         * @private
+         */
+        this.container = container;
+
+        /**
+         * @type {HTMLDivElement}
+         * @private
+         */
+        this.board = null;
+
+        /**
+         * @type {HTMLDivElement}
+         */
+        this.scoreEl = null;
+
         this.state      = GameState.HOME;
         this.gridSize   = gridSize;
         this.cells      = new Array(gridSize * gridSize).fill(null);
-        this.maxScore   = 2;
+        this.score      = 2;
+        this.scoreUpdated = false;
+        this.swipeSound = new Audio(SWIPE_SOUND_SRC);
+        this.swipeSound.preload = 'auto';
 
         this.touch = {
             x: null,
@@ -77,6 +97,7 @@ export class Game {
         })
 
         document.addEventListener("touchmove", (event) => {
+            event.preventDefault();
             const [ touch ] = event.touches;
             const { clientX: x, clientY: y } = touch;
 
@@ -96,8 +117,6 @@ export class Game {
                 y: null
             };
         });
-
-        this.insertRandom(2048)
     }
 
     swipeTo(x, y, threshold = 50) {
@@ -133,6 +152,7 @@ export class Game {
 
     moveLeft() {
         let moved = false;
+        let soundPlayed = false;
         const n = this.gridSize;
         for (let x = 1; x < n; x++) {
             for (let y = 0; y < n; y++) {
@@ -157,13 +177,22 @@ export class Game {
                     this.cells[this.index(newX, y)] = cell;
                     this.cells[index] = null;
                 }
+
+                if (moved && !soundPlayed) {
+                    soundPlayed = true;
+                    this.swipeSound.play();
+                }
             }
         }
+
+        if (moved && soundPlayed)
+            this.swipeSound.currentTime = 0;
 
         this.update(moved);
     }
 
     moveRight() {
+        let soundPlayed = false;
         let moved = false;
         const n = this.gridSize;
         for (let x = n - 2; x >= 0; x--) {
@@ -190,14 +219,23 @@ export class Game {
                     this.cells[this.index(newX, y)] = cell;
                     this.cells[index] = null;
                 }
+
+                if (moved && !soundPlayed) {
+                    soundPlayed = true;
+                    this.swipeSound.play();
+                }
             }
         }
+        
+        if (moved && soundPlayed)
+            this.swipeSound.currentTime = 0;
         
         this.update(moved);
     }
 
     moveUp() {
         let moved = false;
+        let soundPlayed = false;
         const n = this.gridSize;
         for (let y = 1; y < n; y++) {
             for (let x = 0; x < n; x++) {
@@ -222,14 +260,23 @@ export class Game {
                     this.cells[this.index(x, newY)] = cell;
                     this.cells[index] = null;
                 }
+
+                if (moved && !soundPlayed) {
+                    soundPlayed = true;
+                    this.swipeSound.play();
+                }
             }
         }
+
+        if (moved && soundPlayed)
+            this.swipeSound.currentTime = 0;
 
         this.update(moved);
     }
 
     moveDown() {
         let moved = false;
+        let soundPlayed = false;
         const n = this.gridSize;
         for (let y = n - 2; y >= 0; y--) {
             for (let x = 0; x < n; x++) {
@@ -254,8 +301,16 @@ export class Game {
                     this.cells[this.index(x, newY)] = cell;
                     this.cells[index] = null;
                 }
+
+                if (moved && !soundPlayed) {
+                    soundPlayed = true;
+                    this.swipeSound.play();
+                }
             }
         }
+
+        if (moved && soundPlayed)
+            this.swipeSound.currentTime = 0;
 
         this.update(moved);        
     }
@@ -290,7 +345,6 @@ export class Game {
 
         if (!this.isMergeble(toX, toY, fromCell.val))
             throw new Error("cells not mergeble");
-
         
         const mergedCell = this.cell(toX, toY);
         mergedCell.val *= 2;
@@ -299,7 +353,8 @@ export class Game {
         mergedCell.updated = true;
         fromCell.el.remove();
         this.cells[fromIndex] = null;
-        this.maxScore = Math.max(mergedCell.val, this.maxScore);        
+        if (this.score < mergedCell.val) this.scoreUpdated = true;
+        this.score = Math.max(mergedCell.val, this.score);
     }
 
     insertRandom(val = 2) {
@@ -330,6 +385,17 @@ export class Game {
                 el.style.transform = `translate(${x * 100}%, ${y * 100}%)`
             }
         }
+
+        this.scoreEl.innerText = this.score;
+
+        if (this.scoreUpdated) {
+            this.scoreUpdated = false;
+            this.scoreEl.style.transform = 'scale(1.75)';
+
+            setTimeout(() => {
+                this.scoreEl.style.transform = 'scale(1)';
+            }, 100)
+        }
     }
 
     insertCell(x, y, val) {
@@ -349,7 +415,7 @@ export class Game {
             updated: false
         };
 
-        this.container.appendChild(this.cells[index].el);
+        this.board.appendChild(this.cells[index].el);
         this.render()
     }
 
@@ -360,8 +426,9 @@ export class Game {
     }
 }
 
-function addClass(element, className) {
-    element.classList.add(`${CLASS_PREFIX}-${className}`);
+function addClass(element, className, extraPrefix = "") {
+    const prefix = CLASS_PREFIX + (extraPrefix ? "-" + extraPrefix : "");
+    element.classList.add(`${prefix}-${className}`);
 }
 
 /**
@@ -400,6 +467,33 @@ function injectStyleSheet() {
 }
 
 /**
+ * 
+ * @param {string} classname 
+ */
+function createBoardElement(classname = "board") {
+    const div = document.createElement("div");
+    addClass(div, classname);
+
+    return div;
+}
+
+/**
+ * 
+ * @param {string} classname 
+ */
+function createHeader(classname = "header") {
+    const header = document.createElement("div");
+    const score = document.createElement("div");
+
+    addClass(header, classname);
+    addClass(score, "score", classname);
+
+    header.appendChild(score);
+
+    return [header, score];
+}
+
+/**
  * initialize the game
  * 
  * @param {Game} game 
@@ -407,8 +501,15 @@ function injectStyleSheet() {
 function initialize(game) {
     injectStyleSheet();
 
+    const [header, score] = createHeader();
+    game.board = createBoardElement();
+    game.scoreEl = score;
+    
     addClass(game.container, "stage");
+    game.container.appendChild(header);
+    game.container.appendChild(game.board);
 
+    // insert random cell
     const x = Math.floor(Math.random() * game.gridSize);
     const y = Math.floor(Math.random() * game.gridSize);
     game.insertCell(x, y, 2);

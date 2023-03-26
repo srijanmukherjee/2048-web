@@ -14,15 +14,22 @@ body {
 
 .game-stage {
     aspect-ratio: 1/1;
-    width: min(90vw, 90vh);
+    width: min(85vw, 90vh);
     position: relative;
-    background-color: #444;
     border-radius: var(--border-radius);
-
+    
     --border-radius: 12px;
+    --bg-color: #444;
 }
 
-.game-stage > .game-cell {
+.game-stage > .game-board {
+    aspect-ratio: 1/1;
+    position: relative;
+    background-color: var(--bg-color);
+    border-radius: var(--border-radius);
+}
+
+.game-stage > .game-board > .game-cell {
     position: absolute;
     display: grid;
     place-items: center;
@@ -35,4 +42,23 @@ body {
     border: 5px solid #444;
     border-radius: var(--border-radius);
     user-select: none;
+}
+
+/** Header **/
+.game-header {
+    display: flex;
+    justify-content: center;
+    background-color: var(--bg-color);
+    margin-bottom: 1em;
+    border-radius: var(--border-radius);
+}
+
+.game-header > .game-header-score {
+    padding: 0.2em;
+    font-size: calc(100% + 5vw);
+    font-weight: bold;
+    color:  #fff;
+    user-select: none;
+    z-index: 1;
+    transition: 75ms;
 }
